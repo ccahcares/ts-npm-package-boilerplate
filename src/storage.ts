@@ -1,9 +1,9 @@
-import _ from "lodash";
-import axios, { AxiosInstance } from "axios";
-import { generateKey, toFixedLengthChunks } from "./utils.js";
-import { Page, Records } from "./interfaces.js";
+import _ from 'lodash';
+import axios, { AxiosInstance } from 'axios';
+import { generateKey, toFixedLengthChunks } from './utils.js';
+import { Page, Records } from './interfaces.js';
 
-export const ZAPIER_STORE_URL = "https://store.zapier.com";
+export const ZAPIER_STORE_URL = 'https://store.zapier.com';
 export const MAX_KEY_SIZE = 24500;
 export const MAX_KEYS = 495;
 
@@ -22,7 +22,7 @@ export class Storage {
     this.client.interceptors.response.use(undefined, (error) => {
       const errorMessage = error?.response?.data;
       if (errorMessage) {
-        error.message = error.message + "\nReason: " + errorMessage.error;
+        error.message = error.message + '\nReason: ' + errorMessage.error;
       }
       throw error;
     });
@@ -45,23 +45,23 @@ export class Storage {
 
     try {
       // Parse data
-      let contents = _.flatMap(pages, (page) => page.records).join("");
-      contents = Buffer.from(contents, "base64").toString();
+      let contents = _.flatMap(pages, (page) => page.records).join('');
+      contents = Buffer.from(contents, 'base64').toString();
       const records = JSON.parse(contents);
       return records;
     } catch (error: any) {
       error.message =
-        "Deduper cache seems to be corrupted\nReason: " + error.message;
+        'Deduper cache seems to be corrupted\nReason: ' + error.message;
       throw error;
     }
   }
 
   private async fetchPage(page = 0): Promise<Page> {
     const response = await this.client.request({
-      method: "GET",
-      url: "/api/records",
+      method: 'GET',
+      url: '/api/records',
       headers: {
-        "X-Secret": generateKey(`${this.key}.${page}`),
+        'X-Secret': generateKey(`${this.key}.${page}`),
       },
     });
 
@@ -69,12 +69,12 @@ export class Storage {
 
     if (!data.__zapier_custom_deduper__) {
       throw new Error(
-        "Invalid page. The UUID key might be used by something else.",
+        'Invalid page. The UUID key might be used by something else.',
       );
     }
 
     const records = Object.keys(response.data)
-      .filter((key) => key.startsWith("records."))
+      .filter((key) => key.startsWith('records.'))
       .reduce((prev, current) => {
         const records = response.data[current];
         return prev.concat(records);
@@ -88,7 +88,7 @@ export class Storage {
 
   public async save(records: Records) {
     // Encode data
-    const contents = Buffer.from(JSON.stringify(records)).toString("base64");
+    const contents = Buffer.from(JSON.stringify(records)).toString('base64');
     const lines = toFixedLengthChunks(contents, this.MAX_KEY_SIZE);
     const parts = _.chunk(lines, this.MAX_KEYS);
 
@@ -111,11 +111,11 @@ export class Storage {
 
   private async savePage(page: number, data: any) {
     const response = await this.client.request({
-      method: "POST",
-      url: "/api/records",
+      method: 'POST',
+      url: '/api/records',
       data,
       headers: {
-        "X-Secret": generateKey(`${this.key}.${page}`),
+        'X-Secret': generateKey(`${this.key}.${page}`),
       },
     });
     return response.data;

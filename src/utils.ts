@@ -1,4 +1,4 @@
-import uuid from "uuid-by-string";
+import uuid from 'uuid-by-string';
 
 export function generateKey(input: string): string {
   return uuid(input);
@@ -6,16 +6,16 @@ export function generateKey(input: string): string {
 
 export function toFixedLengthChunks(str: string, size: number) {
   let i = 0;
-  let line = "";
+  let line = '';
   const lines = [];
 
   do {
-    line = str.substring(i, i+size);
+    line = str.substring(i, i + size);
     if (line) {
       lines.push(line);
     }
     i += size;
-  } while (line !== "");
+  } while (line !== '');
 
   return lines;
 }

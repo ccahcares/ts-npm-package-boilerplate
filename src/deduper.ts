@@ -1,7 +1,7 @@
-import _ from "lodash";
-import hash from "object-hash";
-import { DeduperChanges, PollRecord, Records } from "./interfaces.js";
-import { Storage } from "./storage.js";
+import _ from 'lodash';
+import hash from 'object-hash';
+import { DeduperChanges, PollRecord, Records } from './interfaces.js';
+import { Storage } from './storage.js';
 
 export class Deduper {
   private storage: Storage;
@@ -98,8 +98,8 @@ export class Deduper {
    */
   private hash(record: PollRecord) {
     return hash(record, {
-      algorithm: "md5",
-      encoding: "base64",
+      algorithm: 'md5',
+      encoding: 'base64',
     });
   }
 

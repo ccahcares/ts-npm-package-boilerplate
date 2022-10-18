@@ -1,87 +1,212 @@
-<p align="center">
- <img width="100px" src="https://raw.githubusercontent.com/hebertcisco/ts-npm-package-boilerplate/main/.github/images/favicon512x512-npm.png" align="center" alt=":package: ts-npm-package-boilerplate" />
- <h2 align="center">:package: ts-npm-package-boilerplate</h2>
- <p align="center">TypeScript NPM Module Boilerplate</p>
-  <p align="center">
-    <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/issues">
-      <img alt="Issues" src="https://img.shields.io/github/issues/hebertcisco/ts-npm-package-boilerplate?style=flat&color=336791" />
-    </a>
-    <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/pulls">
-      <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/hebertcisco/ts-npm-package-boilerplate?style=flat&color=336791" />
-    </a>
-     <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate">
-      <img alt="GitHub Downloads" src="https://img.shields.io/npm/dw/ts-npm-package-boilerplate?style=flat&color=336791" />
-    </a>
-    <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate">
-      <img alt="GitHub Total Downloads" src="https://img.shields.io/npm/dt/ts-npm-package-boilerplate?color=336791&label=Total%20downloads" />
-    </a>
- <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate">
-      <img alt="GitHub release" src="https://img.shields.io/github/release/hebertcisco/ts-npm-package-boilerplate.svg?style=flat&color=336791" />
-    </a>
-    <br />
-    <br />
-  <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/issues/new/choose">Report Bug</a>
-  <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/issues/new/choose">Request Feature</a>
-  </p>
- <h3 align="center">Systems on which it has been tested:</h3>
- <p align="center">
-   <a href="https://www.apple.com/br/macos/">
-      <img alt="Macos" src="https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white&style=flat" />
-    </a>
-    <a href="https://ubuntu.com/download">
-      <img alt="Ubuntu" src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white&style=flat" />
-    </a>
-    <a href="https://www.microsoft.com/pt-br/windows/">
-      <img alt="Windows" src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white&style=flat" />
-    </a>
-  </p>
-<p align="center">Did you like the project? Please, considerate <a href="https://www.buymeacoffee.com/hebertcisco">a donation</a> to help improve!</p>
+# Custom Zapier Deduper
 
-<p align="center"><strong>TypeScript NPM Module Boilerplate</strong>✨</p>
-
-
-# Getting started
+This library will allow you to build a Custom Zapier deduper for your advanced polling triggers use cases in your Zapier app.
 
 ## Installation
 
-> Clone this repository: `git clone https://github.com/hebertcisco/ts-npm-package-boilerplate`
-
-### Open the directory and run the script line:
-
-```bash
-cd ts-npm-package-boilerplate 
+```shell
+$ yarn add z-deduper
 ```
-```bash
-npm i  # or yarn
+
+## Usage
+
+**z-deduper** uses the Zapier Storage REST API behind the scenes to implement a custom deduper that will allow a polling trigger to compare the current API response records with the records that were cached by the deduper in order to determine which ones are new records and which ones are only updated records when the API doesn't include any timestamps to indicate when a record has been created or updated.
+
+To get started, you'll need to create an instance of **z-deduper**, you can do it like so:
+
+```js
+const { getDeduper } = require("z-deduper");
+
+const deduper = getDeduper("your_zap_id_goes_here");
 ```
-```bash
-rm -rf .git && git init && git add . && git commit -m "Initial commit" #Optional
+
+Basically, the deduper should only run when the zap is enabled. You will need to take care of a few cases to get it to work properly.
+
+**Initializing the deduper**
+
+When the zap is turned on, Zapier will start populating its internal deduper and `bundle.meta.isPopulatingDedupe` will be set to `true`. At this point, you will have to initialize the deduper with as many records as possible (See the examples below).
+
+```js
+// ...
+
+const contacts = await fetchContacts(z);
+
+if (bundle.meta.isPopulatingDedupe) {
+  // Initialize the custom deduper
+  await deduper.initialize(contacts);
+}
+
+// ...
 ```
-Or create use the button "Use this template"
 
-Edit the Icon on Figma:
+**Loading a sample**
 
-<a href="https://www.figma.com/file/vpevGX3j9tmtW8OyLQ9eUm/ts-npm-package-boilerplate-icon?node-id=0%3A1">
-   <img alt="Figma Icon" src="https://raw.githubusercontent.com/hebertcisco/ts-npm-package-boilerplate/main/.github/images/figma-badge.png"/>
-</a>
+When the user is testing the trigger, Zapier will run the trigger to fetch some samples. In this case, `bundle.meta.isLoadingSample` will be set to `true` and the deduper should be bypassed.
 
-## 🤝 Contributing
+```js
+const contacts = await fetchContacts(z);
 
-Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](issues).
+if (bundle.meta.isLoadingSample) {
+  // When the deduper cache is empty, it will actually return all the records
+  const changes = deduper.findChanges(contacts);
+  return changes.all;
+}
+```
 
-## Show your support
+**When the zap is polling for data**
 
-Give a ⭐️ if this project helped you!
+When a polling interval comes around, the trigger should load the deduper cache first, call the `findChanges` method on the current API response records, and finally, it must call `persistChanges` to update the deduper cache.
 
-Or buy me a coffee 🙌🏾
+`findChanges` method will return an object containing the following items:
 
-<a href="https://www.buymeacoffee.com/hebertcisco">
-    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=hebertcisco&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff" />
-</a>
+- `created`: An array containing the newly created records only.
+- `updated`: A an array containing the updated records only.
+- `all`: A combination of `created` and `updated`.
 
-[![codecov](https://codecov.io/gh/hebertcisco/ts-npm-package-boilerplate/branch/main/graph/badge.svg?token=Q9fr548J0D)](https://codecov.io/gh/hebertcisco/ts-npm-package-boilerplate)
+```js
+const contacts = await fetchContacts(z);
 
-## 📝 License
+await deduper.load();
+const changes = deduper.findChanges(contacts);
+await deduper.persistChanges(contacts);
 
-Copyright © 2022 [Hebert F Barros](https://github.com/hebertcisco).<br />
-This project is [MIT](LICENSE) licensed.
+return changes.created; // or changes.updated;
+```
+
+### Example 01: New Contact
+
+Here's a quick example showing how to use the custom deduper to detect new records.
+
+```js
+const zapier = require("zapier-platform-core");
+const { getDeduper } = require("z-deduper");
+const { apiUrl } = require("../config");
+
+/**
+ * Fetch a list of the contacts
+ *
+ * @param {zapier.ZObject} z
+ */
+async function fetchContacts(z) {
+  // Make the request
+  const response = await z.request({
+    method: "GET",
+    url: apiUrl,
+  });
+  const contacts = response.json;
+  return contacts;
+}
+
+/**
+ * On Contact Created
+ *
+ * @param {zapier.ZObject} z
+ * @param {zapier.Bundle} bundle
+ */
+const perform = async (z, bundle) => {
+  const zapId = bundle.meta.zap.id;
+  if (!zapId) {
+    throw new Error("Zap ID is required for the custom deduper to work");
+  }
+  // Get an instance of the custom deduper
+  const deduper = getDeduper(zapId);
+
+  // Fetch contacts from the API
+  const contacts = await fetchContacts(z);
+
+  if (bundle.meta.isPopulatingDedupe) {
+    // Initialize the custom deduper
+    await deduper.initialize(contacts);
+
+    // Pass these to the Zapier Deduper
+    const changes = deduper.findChanges(contacts);
+    return changes.all;
+  }
+
+  if (bundle.meta.isLoadingSample) {
+    const changes = deduper.findChanges(contacts);
+    return changes.all;
+  }
+
+  // If we get here, it means that the zap is enabled
+  // The follwing will run on each polling interval
+  await deduper.load();
+  const changes = deduper.findChanges(contacts);
+  await deduper.persistChanges(contacts);
+
+  // Returns only the newly created records
+  return changes.created;
+};
+```
+
+### Example 02: Updated Contact
+
+In this example, the deduper will help in detecting which contacts have been updated even though the contacts don't have any timestamps.
+
+```js
+const zapier = require("zapier-platform-core");
+const { getDeduper } = require("z-deduper");
+const { apiUrl } = require("../config");
+
+/**
+ * Fetch a list of the contacts
+ *
+ * @param {ZObject} z
+ */
+async function fetchContacts(z) {
+  // Make the request
+  const response = await z.request({
+    method: "GET",
+    url: apiUrl,
+  });
+  const contacts = response.json;
+  return contacts;
+}
+
+/**
+ * On Contact updated
+ *
+ * @param {zapier.ZObject} z
+ * @param {zapier.Bundle} bundle
+ */
+const perform = async (z, bundle) => {
+  const zapId = bundle.meta.zap.id;
+  if (!zapId) {
+    throw new Error("Zap ID is required for the custom deduper to work");
+  }
+  // Get an instance of the custom deduper
+  const deduper = getDeduper(zapId);
+
+  // Fetch contacts from the API
+  const contacts = await fetchContacts(z);
+
+  if (bundle.meta.isPopulatingDedupe) {
+    // Initialize the custom deduper
+    await deduper.initialize(contacts);
+
+    // Pass these to the Zapier Deduper
+    const changes = deduper.findChanges(contacts);
+    return changes.all;
+  }
+
+  if (bundle.meta.isLoadingSample) {
+    const changes = deduper.findChanges(contacts);
+    return changes.all;
+  }
+
+  // If we get here, it means that the zap is enabled
+  // The follwing will run on each polling interval
+  await deduper.load();
+  const changes = deduper.findChanges(contacts);
+  await deduper.persistChanges(contacts);
+
+  // Returns only the updated records
+  return changes.updated;
+};
+```
+
+As you might have already noticed, both examples are very similar. The only difference is that the "New Contact" trigger will return `changes.created` whereas "Update Contact" will return `changes.updated`.
+
+## License
+
+MIT

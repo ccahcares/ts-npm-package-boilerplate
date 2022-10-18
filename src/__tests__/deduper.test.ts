@@ -1,5 +1,5 @@
 import {expect, jest, it} from '@jest/globals';
-import { Deduper, getDeduper } from "../src/deduper.js";
+import { Deduper, getDeduper } from "../deduper.js";
 import nock from 'nock';
 
 describe("Deduper", () => {

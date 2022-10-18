@@ -1,7 +1,7 @@
 import {expect, it} from '@jest/globals';
 import nock from "nock";
-import { Storage, ZAPIER_STORE_URL } from "../src/storage.js";
-import { generateKey } from "../src/utils.js";
+import { Storage, ZAPIER_STORE_URL } from "../storage.js";
+import { generateKey } from "../utils.js";
 
 const ZAP_ID = "12345";
 

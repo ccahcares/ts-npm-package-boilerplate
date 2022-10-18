@@ -1,5 +1,5 @@
 import {expect, it} from '@jest/globals';
-import { generateKey, toFixedLengthChunks } from "../src/utils.js";
+import { generateKey, toFixedLengthChunks } from "../utils.js";
 
 describe("Utils", () => {
   describe("generateKey", () => {
